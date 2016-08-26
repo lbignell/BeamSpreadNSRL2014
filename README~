@@ -1,0 +1,161 @@
+3/28/14
+-This file was copied from my original simulation, quenched-Edep-spec, which
+ was focussed on examining the differences between quenching per interaction
+ and quenching per event.
+-This simulation will simply look at the energy deposited in the vials for the
+ proposed NSRL beamline expt setup.
+DetectorConstr:
+-A simple vial, followed by 20 x 20 x Z cm of HDPE (z is adjustable), followed
+ by another vial directly behind the first. This can later be extended to an
+ array of vials. I should investigate whether it'll be easier to make the
+ generation of the existing vial geometry into some sort of function so that I
+ can simply place another 'vial' ~Z cm away from the first vial.
+PGA:
+-Beam will be uniformly incident over the vial area.
+PhysList:
+-G4 low energy. I should update the existing one.
+SD:
+-Shouldn't actually change too much, I still want the Edep in the vial. I will
+ give it the once-over to ensure that it is correct for this application.
+RA:
+-Same as SD, just needs a once-over to ensure it'll be correct.
+DetectorMessenger:
+-I want to be able to adjust the thickness of the attenuation layer, which
+ means that I need to adjust the location of the entire second vial.
+
+-DC has been modified so that it is just the vial.
+-PGA is working correctly, AFAIK.
+-PhysicsList has been upgraded. I've reappropriated the example physics list
+ from the advanced/Hadrontherapy example as my physics list.
+-Commented out most of the irrelevant sections in SensitiveDetector
+-Also commented out irrelevant sections of RunAction
+
+4/2/14
+-Back to it, as COWBELLS isn't working, and I've figured out how to do cmake.
+-Still need to modify DetectorConstruction, add second SensitiveDetector as the
+ second vial, update RunAction accordingly, and develop DetectorMessenger to
+ adjust the PET thickness/density.
+
+-Modified DetectorConstruction so that it now resembles the NSRL geometry.
+-But... The range of protons is clearly discrepant with the SRIM/PSTAR calcs!
+-->Range requires ~160 mm of HDPE, rather than ~233 mm.
+-->I've simplified the physics list, checked the material definition and density
+   as well as the particle energy; no joy :-S
+
+4/7/14
+-As far as I can see there is nothing wrong with the physics list (I can't
+ attribute it to a 'bad choice' of physics either, it just doesn't make much
+ difference when I change the physics models).
+-There's also nothing wrong with the detector construction either, as far as I
+ can tell. (The dimensions are correct, I've added a 1mm gap between vial and
+ HDPE block to ensure volumes aren't overlapping).
+-In case I forget again, the command to cmake the program is:
+
+cmake -DGeant4_DIR=/usr/local/geant4.10.00/lib64/Geant4-10.0.0/ /home/local1/EdepNSRL2014/
+
+-Well, I'm stumped. I think the only thing to do now is to make the HDPE
+ absorber a sensitive detector and start probing the material properties,
+ physics, etc.
+
+4/8/14
+-Actually, before I do the above, I'll transfer this code over to my other
+ Geant4 machine, and see if it runs on an earlier version.
+-->Well that didn't work.
+-I've updated my physics; now rather than using a G4VUserPhysicsList-derived 
+ derived class, I'm using a 'physics factory'. This ensures that the Physics is
+ all completely correct (or at least not completely stuffed).
+-->No effect.
+-I can't see anything wrong with my DetectorConstruction.cc file, but just to be
+ sure I used the pre-defined materials based on the NIST database.
+-->Et Voila! The range now appears to be correct. I don't know why... but it
+   does. Perhaps there is a problem with the way I was defining the density of 
+   HDPE (it would have to be the units), or perhaps it has to do with the mean
+   ionisation energy (the only other difference)?
+
+To do:
+- Create a DetectorMessenger class to handle changing the absorber thickness.
+- Add more vials (I guess I could also make them sensitive detectors).
+- Look at the effect of adding a shaping material to flatten out the dose.
+
+4/14/14
+- I've run for various thicknesses of HDPE, but there is some wierdness.
+- Firstly, there is a peak at low energies --> Gammas scattering in?
+- Secondly, the dose in back/front is quite a bit lower than the SRIM calc. Why?
+- Thirdly, there is some structure at the higher energies of the Edep spectrum 
+  in the rear vial. I don't know why.
+
+Things to do:
+- Gate the vial Edep by process and parent particle, etc. (so that in ROOT I can
+  identify how the Edep occurred).
+- Make the HDPE into a sensitive detector and get similar info to the vials.
+- Get the number (and energy spectrum) of protons that leave the world volume.
+- Turn on/off various processes to estimate their effects.
+- Add more vials at the front/back.
+
+4/15/14
+- I've added the capability to look at the Kin En of the incident particle as it
+  enters the vial, the Edep caused by that particle, the particle type, the path
+  length of that particle prior to entry, and the path length within the vial.
+- It appears that:
+  - When you break down the energy deposit by type of particle, most of it comes
+    from the primary proton. The feature at low energies is predominantly due to
+    electrons.
+  - There is some peculiar structure when you plot Edep vs Kinetic Energy of
+    incident particles. There is a line associated with whole energy deposit,
+    and there is a curve structure that limits the incident kinetic energy. I 
+    suspect that this is a geometry-dependent effect, so I am adding another two
+    vials to the front (one below and one to the side, to simulate a corner).
+  - dE/dX vs incident kinetic energy actually follows what I would expect (a
+    good thing too, otherwise there may be a physics problem).
+  - There is a distinct double-peaked structure in the distribution of the
+    kinetic energy of incident protons. Geometry?
+
+4/16/14
+- Geometry: beam = +y, vertical up = +z.
+- Adding new vials below and next to existing vial. There will be a 10 mm gap
+  between the top of the vial underneath and the bottom of the front vial. There
+  will be a 5 mm gap between the vial next to the front vial.
+- Offset for underneath vial = 72.27 mm.
+- Offset for side vial = 5 mm + 2*(vial outer radius)
+
+- After discussion with David:
+  - I need to modify the liquid volume to 15 mL.
+  - I should also log the vertex position of the incident particles (so I can
+    see shadows from front vials, etc.)
+  - I should plot Edep in rear vial as a function of Edep in front vial.
+
+- All done.
+
+4/17/14
+- Interestingly, when you compare the incident particle kinetic energy for
+  protons that deposited energy in the front vial with those that didn't, the
+  source of the two-population distribution becomes apparent. The higher KE
+  protons come from the particles that miss the front vial and are deflected to 
+  the rear vial.
+  --> If this is the case, shouldn't the effect be more pronounced when there
+      are no vials adjacent to the front vial? Testing this...
+      - There may have been a difference, but it wasn't obviously significant.
+
+- Adding the 'flattener' at the front to try and fix this effect...
+  --> The flattener changes the dose profile, so that the dose received by the
+      vials is higher and the second population decreases. The rear/front dose
+      increases to ~2.8 from 2.4. Results look good for now.
+      Going to run overnight to get better statistics.
+
+6/4/14
+- Flattener dimensions (for ref)
+  - Vial outer radius = 13.77 mm ~ 14 mm.
+  - Flattener thickness = 2*(13.77 + 5)mm = 37.54 mm.
+  - Flattener hole radius = 13.77 + 1 mm = 14.77 mm.
+
+8/27/14
+- It turns out that NSRL has an absorber thickness of 21.5 cm, not 23.3 cm.
+  -> I'm running a scan over the energies to maximise the energy deposit in the
+     rear vial.
+
+- I've also modified the flattener thickness, the hole thicknesses within the 
+  flattener, and added a rear flattener to make the simulation more realistic.
+
+- Based on the new simulation, it appears that we need a beam energy of 201 MeV
+  for a maximal dose ratio.
+

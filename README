@@ -1,0 +1,9 @@
+10/2/14
+- This has all been copied over from ~/EdepNSRL2014.
+- The purpose of this simulation is to run a pencil beam and look at the spread
+  in locations upon stopping.
+- To do this I'll modify the geometry; removing the rear vial setup and 
+  lengthening the HDPE absorber length. I'll make the HDPE absorber a SD and
+  calculate when the radial displacement of stopped protons.
+- I can scan the pencil beam over various locations to see how it affects me.
+- Done: 90% of protons are displaced 20 mm or less, 99% are within 70 mm.

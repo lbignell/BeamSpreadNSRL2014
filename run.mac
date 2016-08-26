@@ -1,0 +1,55 @@
+/tracking/verbose 0
+
+#Lets do I-131 first...
+/gun/energy 80.1850 keV
+/run/beamOn 115000000
+
+/gun/energy 284.305 keV
+/run/beamOn 115000000
+
+/gun/energy 364.489 keV
+/run/beamOn 115000000
+
+/gun/energy 636.989 keV
+/run/beamOn 115000000
+
+/gun/energy 722.911 keV
+/run/beamOn 115000000
+
+#Now do Lu-177!
+/gun/energy 71.6418 keV
+/run/beamOn 115000000
+
+/gun/energy 112.9498 keV
+/run/beamOn 115000000
+
+/gun/energy 136.7245 keV
+/run/beamOn 115000000
+
+/gun/energy 208.3662 keV
+/run/beamOn 115000000
+
+/gun/energy 249.6742 keV
+/run/beamOn 115000000
+
+/gun/energy 321.3159 keV
+/run/beamOn 115000000
+
+#Finally I can do I-123
+/gun/energy 3.77 keV
+/run/beamOn 115000000
+
+/gun/energy 27.202 keV
+/run/beamOn 115000000
+
+/gun/energy 27.4726 keV
+/run/beamOn 115000000
+
+/gun/energy 31 keV
+/run/beamOn 115000000
+
+/gun/energy 158.97 keV
+/run/beamOn 115000000
+
+/gun/energy 528.96 keV
+/run/beamOn 115000000

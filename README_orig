@@ -1,0 +1,183 @@
+7/5/9
+-Happy Birthday Lindsey. Now that that's out of the way, I copied this folder
+ here from multipleInteractions/FinalSimulation.
+	*I've trimmed the fat, gotten rid of all macros and data that came with
+	 the folder.
+-The AIM of this simulation is to get the Edep spectrum of gamma rays of any
+ energy, and apply a quenching correction to that spectrum on a per-interaction
+ basis. This compares with the alternative of applying a correction on a 
+ per-event basis, which is not valid because the secondary electrons don't
+ interact. This will be a program that I use for the initial paper on this
+ matter and also generally for production in the future, so do it good!
+-Here's the plan.
+	*PGA: Same old. Source evenly distributed in liquid, emits
+	 isotropically. Come up with some reasonable default energy, 100 keV?
+	 -->Done.
+	*Det Constr: Same geometry. Might want to eventually put in capability
+	 to do sensitivity/uncertainty analysis, but that's not necessary for
+	 now. Also need to give capability to change scintillant.
+	 -->Done for now, unless I get serious and need to do DetectorMessenger
+	*Phys List: Same again. Include all LowEn models for EM processes.
+	 Hadronic processes aren't needed. Also might want to eventually add
+	 in the capability to replace with PENELOPE models, etc.
+	 -->Done for now.
+	*SD: This is where the action is. Need to get energy of an electron
+	 produced by a gamma, then quench it and add it to the energy deposit
+	 for that event. The down side of this method is that it doesn't allow
+	 Bremsstrahlung inside the cocktail, which shouldn't be too great
+	 anyway. The bigger down side is that edge effects are lost.
+	 An alternative to these problems is that I can create an array with
+	 parents and children to try and reconstruct which electrons are part
+	 which interaction. Need to think about this...Alternatively, Step Act?
+	 Stopping power calculation can be a method of SD. Mean Ionisation
+	 potential is a property of the scintillant.
+
+	-->Best Solution: Create an array with Parent ID, Track ID and Particle
+	   type. For every electron step in the scintillant, find the Edep and
+	   trace back to the last parent gamma. Add to that interaction in
+	   another array. Electrons that can't find a gamma parent mean they
+	   are backscattered from the glass vial. Treat these as a new
+	   interaction. Only issue here is whether the gammas deposit energy on
+	   the step in which they create an electron. If they do, need to add
+	   that to the interaction tally.
+		*Implemented the ProcessHits part, also done passing the data
+		 to RA and have the quench correction.
+
+	*RA: Histogram the Edep, both quenched per interaction and quenched per
+	 event, as well as unquenched. Other data?
+	-->Implemented histograms for spectra from 0 to 3 MeV with 3x10^5 bins.
+	   Expecting to get quenched (both types) and unquenched Edeps in MeV.
+
+12/5/9
+-Program is ostensibly finished.
+-Problems:
+	*The Edep per event doesn't always equal the sum of the Events[] array
+	 which stores the energy deposit in terms of interactions. These should
+	 equal so I'm obviously doing something silly.
+		-Generally what happens is that the first event processed is
+		 identical in energy to EdepPerEvent, so maybe it's in the way
+		 that GetTotalEdep is processed.
+		-OR the problem is with my code, specifically, how I choose my
+		 interaction events. I checked the results against the
+		 simulation output with tracking/verbose 2, and saw events that
+		 were tertiary being treated as secondary.
+		-->Appears to be working now...
+	*There is a special case of this problem where sometimes the Edep in
+	 the scintillant calculated perEvent is non-zero, but the sum of the
+	 Events Array is zero!!
+		-->This is because of gamma-energy depositing events; when the
+		   produced e- would be below the range cut, the gamma deposits
+		   the energy. An if loop excludes gamma deposits from being
+		   counted towards the Events[] tally in ProcessHits.
+		*Action: Fix this problem (modify the if loop and check if
+		 there was an Edep, and if so, were there secondaries?).
+		-->Fixed.
+	*The Birks Integral yields energy values that are far too small. This
+	 is probably due to incorrect assignment of units to variables.
+
+13/5/9
+-Fixed two hit-processing problems above, just need to fix Birks implementation
+ and I'm done.
+-Fixed a few minor problems with Birks Implementation (units, etc), now getting
+ close to Li's predicted results, but not quite spot on. Stopping power calcs
+ also differ from ESTAR predictions.
+
+16/5/9
+-There is no difference in the way Li's program calculates the trapezoidal rule
+	-->Also no difference in Birks function of stopping power calcs.
+	-->And no mistakes with her constants...
+-Added interpolation code below 100 eV.
+-At a dead end... Need inspiration. Currently getting values close to but
+ different from Li's.
+	-->Re-check EVERYTHING, again.
+	-->Would be good to check Li's stopping powers against mine/ESTAR.
+
+19/5/9
+-Current Status: - Still getting different results (Typically greater than by
+ ~1%) from Li's Macro! Maybe this is as good as it'll get? I have checked
+ everything more than once and this is starting to feel like a waste of time!
+-Discovered Li's macro results were an OLD VERSION!!!
+	-->Newer macro agrees quite well, still slight differences (<0.05% in
+	   all cases). Pushing ahead.
+-Checked everything --> Ready to go! 5Million evts ~1.5 hrs, depending on erg.
+
+22/5/9
+-Done some test simulations - everything seems good.
+-Also did comparison between using 1K and 10K points for trapezoidal integ.
+	-->Small difference; I'll take some quality data later on to estimate
+	   if any error is caused by this...
+-Created run.mac; which will run over the I131 and Lu177 peaks of use. Hope to
+ run this over the weekend.
+	-->Also need to run the Xe-131m peak, as a gas source sitting above the
+	   liquid scintillant. Will do this later, as a special case.
+
+3/6/9
+-Running simulation for 110 Million events per energy, should finish on Monday
+ week, AM (i.e. the 15/6/9).
+
+15/6/9
+-Simulation finished, results look good.
+-Now running the trapezoidal integration over 10K numpoints, instead of 1K.
+	*Changed Sensitive Detector.
+
+18/6/9
+-Changed Sensitive detector back so there's 1K numpoints for trap integration.
+-Found slight error in placement of scintillant (was 0.00002 mm too low),
+	*Fixed.
+-Changed Primary Generator Action to cause source to be located as a gas above
+ the scintillant (for Xe-131m measurements). See PGA file for details.
+-Going to run 163.930 keV gammas (Xe-131m) as gas above the scintillant over
+ the weekend (will need to do lots of runs to get decent statistics on Edep in
+ the scintillant, as most events will be wasted).
+
+23/6/9
+-Finished running the Xe-131m Gammas.
+-Xe-131m is highly converted, so I need to run with conversion e-s also.
+	*There are 3 of these (K, L and M shells).
+
+29/6/9
+-OK, didn't quite do the CE simulation correctly!
+	*Didn't change SD to log electrons instead of gammas.
+	*In hindsight I think this may be better to be made into a totally
+	 separate simulation, to avoid confusion...
+
+3/7/9
+-Changing back to ordinary simulation so that I can run on the cluster.
+	*Changed PGA source distribution to be within the liquid.
+	*Changed Number of bins and range of TH1D root histograms to save space
+	*Updated the run.mac file to include the necessary data for I-123
+
+14/7/9
+-Running I-123 gammas on this box, with Ultima Gold as scintillant.
+
+13/8/9
+-I-123 needs to be run inside the scintillant!!
+-Running I-123 gammas inside the scint with Insta-Gel as the scintillant.
+
+23/9/9
+-Going to do some Tc-99m work.
+-Current parameters:
+	*PGA: Source homogenously distributed within liquid scintillant.
+	*Det constr: Insta-Gel scintillant.
+	*SD: 1000 point grid for trap rule Birks integration
+	*RA: spectra gotten in 100K bins from 0-1 MeV.
+-Going to run with Tc-99m peaks for 10^8 events each.
+-Need to either use Insta-Gel for Tc measurement of do a simulation with Ultima
+ Gold as well.
+
+29/9/9
+-Getting spectrum for Tc99m gamma (really weak one at 2186 keV).
+-Left parameters the same as above (incl. Insta-Gel as scintillant).
+
+8/10/9
+-Finished with Y-90 simulations. Currently scintillant is Ultima Gold.
+
+7/9/10
+-Going to calculate quench per int for I-125 - possibly will give appreciably
+ different results from using quench per event.
+-Need to update the physics list for the newer version of Geant4.
+-Would be good to update RA/SD so that it's using a tree to store the 3 histos.
+
+23/9/10
+-On reflection; why not just use the existing executable? It does everything I
+ need it to, and I won't have to stuff around with the physics.
